@@ -118,6 +118,10 @@ textarea::placeholder{color:#3f445899}
 .fl{margin:-2px 0 10px}
 .couple{display:block;margin:12px 0 8px}
 .couple img{display:block;width:min(88%,340px);height:auto;margin:0 auto;filter:drop-shadow(0 0 10px #ffffffcc)}   /* صورة اسمي العروسين (assets/names.png) */
+#mus{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:3;width:42px;height:42px;border-radius:50%;border:1px solid #a8782f88;background:#ffffff70;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
+#mus[hidden]{display:none}
+#mus svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#mus .x{display:none}#mus.off .w{display:none}#mus.off .x{display:block}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
 </style>
 </head>
@@ -135,7 +139,9 @@ textarea::placeholder{color:#3f445899}
   <button id="skip">تخطّي</button>
 </div>
 
+<audio id="song" src="assets/paulyudin-wedding-wedding-music-574002.mp3" loop preload="auto"></audio>
 <div id="inv">
+  <button id="mus" hidden aria-label="تشغيل أو إيقاف الموسيقى"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path class="w" d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/><path class="x" d="M17 9l5 6M22 9l-5 6"/></svg></button>
   <div class="bgBlur"></div><div class="bg"></div>
   <div id="sc"><div class="col">
 
@@ -208,12 +214,12 @@ textarea::placeholder{color:#3f445899}
 /* ===== عدّل هون ===== */
 const C={
   groom:"مازن", bride:"رويدا",
-  fam1:"آل الحمّال", fam2:"آل السّمكري",
+  fam1:"آل الحمّال", fam2:"آل سمكري",
   date:"2026-11-19T20:00:00",
   place:"Plaza Hall", address:"دمشق - المزرعة - مجمع ديونز بردى",
-  mapUrl:"https://maps.app.goo.gl/SyY5YnhXyArZHCKd8",
+  mapUrl:"https://maps.google.com/?q=Plaza+Hall+Damascus",
   /* أرقام الواتساب بالصيغة الدولية بدون +  (مدعوّين العروس بيأكدو على رقم العروس، ومدعوّين العريس على رقم العريس) */
-  contacts:{ bride:{whatsapp:"963937398669"}, groom:{whatsapp:"963949242195"} },
+  contacts:{ bride:{whatsapp:"96393732503"}, groom:{whatsapp:"963949242195"} },
   defaultSide:"bride"   /* إذا الرابط ما فيه كود مدعو صحيح بيستعمل هاد الطرف */
 };
 /* ==================== */
@@ -296,10 +302,20 @@ function finish(){if(done)return;done=true;
 vS.addEventListener('timeupdate',()=>{if(vS.duration&&vS.currentTime>=vS.duration-1.1)showCard()});
 vS.addEventListener('ended',showCard);vS.addEventListener('error',showCard);
 setTimeout(()=>{if(!shown&&vS.readyState<2)showCard()},4500);
-seal.onclick=()=>{if(opened)return;opened=true;seal.classList.remove('ready');hint.classList.remove('ready');
+/* الأغنية: بتبلّش لما الضيف يكبس على الختم (المتصفحات بتمنع الصوت التلقائي قبل لمسة)، وبتفوت بالتدريج */
+const song=$('song'),mus=$('mus');
+function startMusic(){
+  if(song.dataset.bad)return;
+  song.volume=0;
+  song.play().then(()=>{mus.hidden=false;mus.classList.remove('off');let v=0;const f=setInterval(()=>{v=Math.min(.7,v+.035);song.volume=v;if(v>=.7)clearInterval(f)},120)}).catch(()=>{});
+}
+song.addEventListener('error',()=>{song.dataset.bad=1;mus.hidden=true});
+mus.onclick=()=>{if(song.paused){song.play();mus.classList.remove('off')}else{song.pause();mus.classList.add('off')}};
+
+seal.onclick=()=>{if(opened)return;startMusic();opened=true;seal.classList.remove('ready');hint.classList.remove('ready');
   vE.currentTime=0;vE.play().catch(()=>{});setTimeout(finish,9000)};
 vE.addEventListener('ended',()=>setTimeout(finish,250));
-$('skip').onclick=finish;
+$('skip').onclick=()=>{startMusic();finish()};
 </script>
 </body>
 </html>
